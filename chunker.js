@@ -526,7 +526,10 @@ hls/${filePrefix}.m3u8
  */
 function createHLSPlayer(playlistPath, metadata) {
   const playerPath = path.join(outputDir, 'player.html');
-  const relativePlaylistPath = path.basename(playlistPath);
+  
+  // Important: For local file playback, we need to use the file name only
+  // and place the player in the same directory as the master playlist
+  const playlistFilename = path.basename(playlistPath);
   
   const playerHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -567,47 +570,135 @@ function createHLSPlayer(playlistPath, metadata) {
     .info p {
       margin: 5px 0;
     }
+    .note {
+      background-color: #fef9e7;
+      border-left: 4px solid #f1c40f;
+      padding: 10px 15px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
     .footer {
       text-align: center;
       margin-top: 30px;
       font-size: 14px;
       color: #7f8c8d;
     }
+    .error-message {
+      color: #e74c3c;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px;
+      display: none;
+    }
+    .instructions {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e8f4f8;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #2980b9;
+    }
+    .instructions ol {
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin-bottom: 8px;
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
   <h1>IELTS2GO HLS Player</h1>
   
+  <div class="note">
+    <p><strong>Note:</strong> Due to browser security restrictions, this player may not work when opened directly from your file system. 
+    For best results, serve this folder using a local web server.</p>
+  </div>
+  
   <div class="player-container">
     <video id="video" controls></video>
+    <div id="error-message" class="error-message">Error loading video. Please check browser console for details.</div>
     <div class="info">
       <p><strong>Source:</strong> ${path.basename(inputFile)}</p>
-      <p><strong>Resolution:</strong> ${metadata.resolution}</p>
-      <p><strong>Duration:</strong> ${Math.floor(metadata.duration)} seconds (${(metadata.duration / 60).toFixed(1)} minutes)</p>
+      <p><strong>Resolution:</strong> ${metadata.resolution || 'Unknown'}</p>
+      <p><strong>Duration:</strong> ${Math.floor(metadata.duration || 0)} seconds (${((metadata.duration || 0) / 60).toFixed(1)} minutes)</p>
     </div>
+  </div>
+  
+  <div class="instructions">
+    <h3>How to Play This Video</h3>
+    <ol>
+      <li>Option 1: Use a local web server like <code>http-server</code> or <code>live-server</code> to serve this directory.</li>
+      <li>Option 2: Upload these files to a web server that supports HLS streaming.</li>
+      <li>Option 3: Use VLC Media Player to open the <code>${playlistFilename}</code> file directly.</li>
+    </ol>
+    <p>To install a simple web server, run: <code>npm install -g http-server</code> and then <code>http-server .</code> in this directory.</p>
   </div>
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const video = document.getElementById('video');
-      const videoSrc = '${relativePlaylistPath}';
+      const errorMessage = document.getElementById('error-message');
       
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-          video.play();
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support (Safari)
-        video.src = videoSrc;
-        video.addEventListener('loadedmetadata', function() {
-          video.play();
-        });
-      } else {
-        console.error('HLS is not supported in this browser');
+      // Check if we're running from a web server or file system
+      const isWebServer = window.location.protocol !== 'file:';
+      
+      if (!isWebServer) {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'For security reasons, HLS playback requires a web server. Please see instructions below.';
+        return;
+      }
+      
+      // Load HLS.js dynamically to avoid CORS issues with local files
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.4.12';
+      script.onload = function() {
+        initializePlayer();
+      };
+      script.onerror = function() {
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Failed to load HLS.js library. Please check your internet connection.';
+      };
+      document.head.appendChild(script);
+      
+      function initializePlayer() {
+        const videoSrc = '${playlistFilename}';
+        console.log('Attempting to load HLS stream:', videoSrc);
+        
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            debug: true
+          });
+          
+          hls.on(Hls.Events.ERROR, function(event, data) {
+            console.error('HLS error:', data);
+            if (data.fatal) {
+              errorMessage.style.display = 'block';
+              errorMessage.textContent = 'Error: ' + data.type + ' - ' + data.details;
+            }
+          });
+          
+          hls.loadSource(videoSrc);
+          hls.attachMedia(video);
+          
+          hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            console.log('HLS manifest parsed successfully');
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Native HLS support (Safari)
+          console.log('Using native HLS support');
+          video.src = videoSrc;
+          video.addEventListener('error', function(e) {
+            console.error('Video error:', video.error);
+            errorMessage.style.display = 'block';
+          });
+        } else {
+          errorMessage.style.display = 'block';
+          errorMessage.textContent = 'HLS is not supported in this browser';
+          console.error('HLS is not supported in this browser');
+        }
       }
     });
   </script>
@@ -621,6 +712,47 @@ function createHLSPlayer(playlistPath, metadata) {
   fs.writeFileSync(playerPath, playerHtml);
   log.success(`HTML player created: ${playerPath}`);
   log.info(`Open this file in a web browser to play the HLS stream`);
+  
+  // Create a simple README file with instructions in the output directory
+  const readmePath = path.join(outputDir, 'PLAYBACK.md');
+  const readmeContent = `# HLS Playback Instructions
+
+This folder contains HLS (HTTP Live Streaming) files generated by IELTS2GO Video Chunker.
+
+## Files
+- \`${playlistFilename}\`: Master playlist file
+- \`hls/${filePrefix}.m3u8\`: Variant playlist file
+- \`hls/${filePrefix}_*.ts\`: Video segments
+- \`player.html\`: Web player for HLS content
+
+## How to Play
+
+### Option 1: Using a Web Server (Recommended)
+1. Install a simple web server: \`npm install -g http-server\`
+2. Navigate to this directory in your terminal
+3. Run: \`http-server .\`
+4. Open the provided URL in your browser
+5. Click on \`player.html\`
+
+### Option 2: Using VLC Media Player
+1. Open VLC Media Player
+2. Go to Media > Open File
+3. Select the \`${playlistFilename}\` file
+4. VLC will handle the HLS streaming
+
+### Option 3: Using a Full Web Server
+If you have access to a web server, upload all files maintaining the directory structure and access the player.html file through your domain.
+
+## Troubleshooting
+- If the player shows errors, check your browser's console for details
+- Ensure you're using a modern browser with HLS support
+- For local playback, a web server is required due to browser security restrictions
+
+Created with IELTS2GO Video Chunker - Empowering Your English Journey
+`;
+  
+  fs.writeFileSync(readmePath, readmeContent);
+  log.info(`Playback instructions created: ${readmePath}`);
 }
 
 /**
