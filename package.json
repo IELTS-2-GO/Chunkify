@@ -1,6 +1,6 @@
 {
   "name": "ielts2go-chunker",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "IELTS2GO Video Chunker - Professional video splitting tool for educational content",
   "main": "chunker.js",
   "bin": {
