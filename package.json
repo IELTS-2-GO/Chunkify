@@ -1,0 +1,44 @@
+{
+  "name": "ielts2go-chunker",
+  "version": "2.0.6",
+  "description": "IELTS2GO Video Chunker - Professional video splitting tool for educational content",
+  "main": "chunker.js",
+  "bin": {
+    "chunkify": "./chunker.js",
+    "ielts2go-chunker": "./chunker.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node chunker.js"
+  },
+  "keywords": [
+    "video",
+    "chunk",
+    "split",
+    "ffmpeg",
+    "cli",
+    "ielts2go",
+    "education",
+    "learning"
+  ],
+  "author": "Fahad Bhuiyan <fahad@ielts2go.com>",
+  "license": "MIT",
+  "homepage": "https://ielts2go.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ielts2go/video-chunker"
+  },
+  "bugs": {
+    "url": "https://github.com/ielts2go/video-chunker/issues"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^12.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "inquirer": "^8.2.4"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "preferGlobal": true
+}
