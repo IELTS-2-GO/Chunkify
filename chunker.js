@@ -536,7 +536,7 @@ function createHLSPlayer(playlistPath, metadata) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IELTS2GO HLS Player</title>
+  <title>HLS Player by Adons Tech</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -610,7 +610,7 @@ function createHLSPlayer(playlistPath, metadata) {
   </style>
 </head>
 <body>
-  <h1>IELTS2GO HLS Player</h1>
+  <h1>HLS Player by Adons Tech</h1>
   
   <div class="note">
     <p><strong>Note:</strong> Due to browser security restrictions, this player may not work when opened directly from your file system. 
@@ -704,7 +704,7 @@ function createHLSPlayer(playlistPath, metadata) {
   </script>
   
   <div class="footer">
-    <p>Created with IELTS2GO Video Chunker - Empowering Your English Journey</p>
+    <p>Created by Adons Tech and researched by Antlers Labs</p>
   </div>
 </body>
 </html>`;
