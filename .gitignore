@@ -1,6 +1,8 @@
+.gitignore
 *.mp4
 *.mkv
 *.avi
 *.mov
 
 node_modules
+ielts2go_chunks

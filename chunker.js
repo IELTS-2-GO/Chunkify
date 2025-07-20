@@ -380,7 +380,7 @@ async function processHLSStream(totalDuration, outputConfig, metadata) {
     fs.mkdirSync(hlsDir, { recursive: true });
   }
   
-  // Simplified approach - just create a single playlist without master playlist initially
+  // Setup paths for playlist and segments
   const playlistPath = path.join(hlsDir, `${filePrefix}.m3u8`);
   const segmentPattern = path.join(hlsDir, `${filePrefix}_%03d.ts`);
   
@@ -395,28 +395,29 @@ async function processHLSStream(totalDuration, outputConfig, metadata) {
   
   return new Promise((resolve, reject) => {
     try {
-      // First check if ffmpeg is available
-      log.info('Checking FFmpeg availability...');
+      log.info('Setting up HLS conversion with optimized parameters...');
       
       const command = ffmpeg(inputFile);
       
-      // Basic HLS options - simplified for better compatibility
+      // Use the proven working parameters (previously fallback method)
       const hlsOptions = [
-        '-c:v', 'libx264',     // Video codec
-        '-c:a', 'aac',         // Audio codec
-        '-preset', qualityPreset,
+        '-c:v', 'libx264',      // Video codec
+        '-preset', 'ultrafast', // Fastest preset for encoding
+        '-tune', 'fastdecode',  // Optimize for fast decoding
+        '-c:a', 'aac',          // Audio codec
+        '-b:a', '96k',          // Lower audio bitrate for speed
+        '-ac', '2',             // Stereo audio
+        '-ar', '44100',         // Standard audio sample rate
         '-hls_time', segmentLength,
         '-hls_segment_filename', segmentPattern,
-        '-hls_list_size', 0,   // Include all segments in playlist
-        '-f', 'hls'            // Format is HLS
+        '-threads', 'auto',      // Use all available CPU threads
+        '-f', 'hls'             // Format is HLS
       ];
       
-      // Add basic encoding parameters that work on most systems
-      hlsOptions.push(
-        '-crf', '23',          // Constant rate factor (quality)
-        '-tune', 'film',       // Tune for film content
-        '-movflags', '+faststart'
-      );
+      // Add any playlist type if specified
+      if (playlistType && playlistType !== 'none') {
+        hlsOptions.push('-hls_playlist_type', playlistType);
+      }
       
       command.outputOptions(hlsOptions);
       command.output(playlistPath);
@@ -448,11 +449,11 @@ async function processHLSStream(totalDuration, outputConfig, metadata) {
           resolve();
         })
         .on('error', (err) => {
-          log.error(`Failed to create HLS stream: ${err.message}`);
-          log.warning('Trying alternative approach with simpler parameters...');
+          log.error(`HLS conversion failed: ${err.message}`);
+          log.warning('Trying with even more basic parameters...');
           
-          // Try with even simpler parameters as fallback
-          tryFallbackHLSConversion(inputFile, playlistPath, segmentPattern)
+          // Try with absolute minimal parameters as last resort
+          tryLastResortHLSConversion(inputFile, playlistPath, segmentPattern)
             .then(resolve)
             .catch(reject);
         })
@@ -465,17 +466,18 @@ async function processHLSStream(totalDuration, outputConfig, metadata) {
 }
 
 /**
- * Fallback HLS conversion with minimal parameters
+ * Last resort HLS conversion with absolute minimal parameters
  */
-async function tryFallbackHLSConversion(inputFile, playlistPath, segmentPattern) {
+async function tryLastResortHLSConversion(inputFile, playlistPath, segmentPattern) {
   return new Promise((resolve, reject) => {
-    log.info('Attempting fallback HLS conversion with minimal parameters...');
+    log.info('Attempting last resort HLS conversion with absolute minimal parameters...');
     
     const command = ffmpeg(inputFile);
     
-    // Minimal HLS options
+    // Absolute minimal HLS options - maximum compatibility
     command.outputOptions([
       '-c:v', 'libx264',
+      '-preset', 'ultrafast',
       '-c:a', 'aac',
       '-hls_time', 4,
       '-hls_segment_filename', segmentPattern,
@@ -486,12 +488,12 @@ async function tryFallbackHLSConversion(inputFile, playlistPath, segmentPattern)
     
     command
       .on('end', () => {
-        log.success(`HLS stream created successfully with fallback method`);
-        createHLSPlayer(path.join(outputDir, `${filePrefix}_master.m3u8`), {});
+        log.success(`HLS stream created successfully with minimal parameters`);
+        createMasterPlaylist(path.dirname(playlistPath), {});
         resolve();
       })
       .on('error', (err) => {
-        log.error(`Fallback HLS conversion also failed: ${err.message}`);
+        log.error(`Last resort HLS conversion failed: ${err.message}`);
         log.warning('Please ensure FFmpeg is properly installed with libx264 and HLS support');
         reject(err);
       })
