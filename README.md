@@ -1,4 +1,4 @@
-# IELTS2GO Video Chunker
+# IELTS2GO Video chunker
 
 ![IELTS2GO Logo](https://ielts2go.com/assets/images/logo.png)
 
@@ -17,7 +17,7 @@ A powerful CLI tool for splitting video files into smaller chunks and generating
 
 ## Prerequisites
 
-Before installing IELTS2GO Video Chunker, ensure you have the following:
+Before installing IELTS2GO Video chunkify, ensure you have the following:
 
 - [Node.js](https://nodejs.org/) (v14 or higher)
 - [FFmpeg](https://ffmpeg.org/download.html) installed and accessible in your system PATH
@@ -26,16 +26,16 @@ Before installing IELTS2GO Video Chunker, ensure you have the following:
 
 ### Global Installation
 
-To install IELTS2GO Video Chunker globally on your PC, run:
+To install IELTS2GO Video chunkify globally on your PC, run:
 
 ```bash
 npm install -g ielts2go-chunker
 ```
 
-After installation, you can use the `chunker` command from anywhere in your terminal:
+After installation, you can use the `chunkify` command from anywhere in your terminal:
 
 ```bash
-chunker video.mp4
+chunkify video.mp4
 ```
 
 ### Local Installation
@@ -44,8 +44,8 @@ If you prefer not to install globally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ielts2go/chunker.git
-   cd chunker
+   git clone https://github.com/ielts2go/chunkify.git
+   cd chunkify
    ```
 
 2. Install dependencies:
@@ -55,7 +55,7 @@ If you prefer not to install globally:
 
 3. Run using Node.js:
    ```bash
-   node chunker.js video.mp4
+   node chunkify.js video.mp4
    ```
 
 ## Usage
@@ -63,7 +63,7 @@ If you prefer not to install globally:
 ### Basic Usage
 
 ```bash
-chunker <input-file> [options]
+chunkify <input-file> [options]
 ```
 
 ### Interactive Mode
@@ -71,7 +71,7 @@ chunker <input-file> [options]
 Running the command with just an input file will start the interactive setup:
 
 ```bash
-chunker video.mp4
+chunkify video.mp4
 ```
 
 This will guide you through selecting:
@@ -102,32 +102,32 @@ This will guide you through selecting:
 
 #### Basic Chunking with Default Settings
 ```bash
-chunker video.mp4
+chunkify video.mp4
 ```
 
 #### Specify Output Directory and Chunk Length
 ```bash
-chunker video.mp4 -d my_chunks -l 120
+chunkify video.mp4 -d my_chunks -l 120
 ```
 
 #### Fast Mode with Custom Prefix
 ```bash
-chunker video.mp4 -f -p lesson_part
+chunkify video.mp4 -f -p lesson_part
 ```
 
 #### Re-encode with High Quality
 ```bash
-chunker video.mp4 -e -q veryslow
+chunkify video.mp4 -e -q veryslow
 ```
 
 #### Generate HLS Streaming Files
 ```bash
-chunker video.mp4 --hls
+chunkify video.mp4 --hls
 ```
 
 #### Advanced HLS Configuration
 ```bash
-chunker video.mp4 --hls --hls-segment 10 --hls-type vod -d streaming
+chunkify video.mp4 --hls --hls-segment 10 --hls-type vod -d streaming
 ```
 
 ## HLS Streaming
